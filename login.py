@@ -17,12 +17,8 @@ class HduLogin(object):
     def __init__(self, *args):
         headers = {
             'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
-            # 'accept-encoding': 'gzip, deflate, br',
             'accept-language': 'zh,zh-CN;q=0.9,en-US;q=0.8,en;q=0.7',
             'cache-control': 'max-age=0',
-            # 'content-length': '98',
-            # 'content-type': 'application/x-www-form-urlencoded',
-            # 'origin': 'https://pt.hdupt.com',
             'referer': 'https://pt.hdupt.com/login.php',
             'sec-ch-ua': '"Google Chrome";v="89", "Chromium";v="89", ";Not A Brand";v="99"',
             'sec-ch-ua-mobile': '?0',
@@ -35,18 +31,26 @@ class HduLogin(object):
         }
         self.session = requests.Session()
         self.session.headers.update(headers)
+        self.retry_time = 0
+        self.flag = False
 
-        if len(sys.argv) > 1:
+        if len(sys.argv) == 3:
             self.username = sys.argv[1]
             self.password = sys.argv[2]
+            self.login()
+            if self.flag:
+                self.signin()
+        elif len(sys.argv) > 1 and len(sys.argv) != 3:
+            print("参数格式错误, 请按照 python login.py username password 来输入")
+            return
         else:
             self.username = args[0]
             self.password = args[1]
+            self.login()
+            if self.flag:
+                self.signin()
 
-        self.retry_time = 0
-
-    # 登录函数
-    def login(self):
+    def login(self):  # 登录函数
         r = self.session.get(url_login_get)
         soup = bs(r.content, "lxml")
 
@@ -76,6 +80,7 @@ class HduLogin(object):
         try:
             if soup.find("a", {"class": "User_Name"}).get_text() == self.username:
                 print("登录成功")
+                self.flag = True
         except:
             self.retry_time += 1
             if self.retry_time < 6:
@@ -85,8 +90,7 @@ class HduLogin(object):
                 print("多次尝试登录失败, 退出程序")
                 return
 
-    # 签到函数
-    def signin(self):
+    def signin(self):  # 签到函数
         r = self.session.get(url_index)
         soup = bs(r.content, "lxml")
         if not soup.find("a", {"onclick": "javascript:qiandao('qiandao')"}):
@@ -102,7 +106,5 @@ class HduLogin(object):
 
 
 if __name__ == '__main__':
-    # hdu = HduLogin('username', 'password')
-    hdu = HduLogin()
-    hdu.login()
-    hdu.signin()
+    # HduLogin('username', 'password')
+    HduLogin()
