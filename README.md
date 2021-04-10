@@ -4,6 +4,8 @@
 
 * python 3.8.6
 * tesseract v5.0.0-alpha.20201127
+* Pillow==8.2.0
+* pytesseract==0.3.7
 
 ## 使用方法
 
