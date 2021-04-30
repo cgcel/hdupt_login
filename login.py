@@ -1,9 +1,13 @@
+# !/usr/env/python3
 # -*- coding: utf-8 -*-
 # author: elvin
 
+import sys
+from datetime import datetime
+
 import requests
 from bs4 import BeautifulSoup as bs
-import sys
+
 from img import MyImg
 
 url_root = 'https://pt.hdupt.com/'
@@ -14,7 +18,9 @@ url_signin = 'https://pt.hdupt.com/added.php'
 
 
 class HduLogin(object):
+
     def __init__(self, *args):
+
         headers = {
             'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
             'accept-language': 'zh,zh-CN;q=0.9,en-US;q=0.8,en;q=0.7',
@@ -29,12 +35,15 @@ class HduLogin(object):
             'upgrade-insecure-requests': '1',
             'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.114 Safari/537.36'
         }
+
         self.session = requests.Session()
         self.session.headers.update(headers)
         self.retry_time = 0
         self.flag = False
 
-        if len(sys.argv) == 3:
+        print(datetime.now().strftime("%Y-%m-%d %H:%M:%S"))  # 打印时间
+
+        if len(sys.argv) == 3:  # 获取命令行参数
             self.username = sys.argv[1]
             self.password = sys.argv[2]
             self.login()
@@ -50,7 +59,9 @@ class HduLogin(object):
             if self.flag:
                 self.signin()
 
-    def login(self):  # 登录函数
+    def login(self):
+        """登录函数
+        """
         r = self.session.get(url_login_get)
         soup = bs(r.content, "lxml")
 
@@ -61,9 +72,9 @@ class HduLogin(object):
 
         with open("image.png", "wb") as img:
             img.write(requests.get(url_image).content)
+
         captcha_str = MyImg("image.png").get_str()
-        print(captcha_str)
-        # captcha_str = input("输入验证码: ")
+        print("OCR识别验证码: {}".format(captcha_str))
 
         form_data = {
             'username': self.username,
@@ -74,8 +85,6 @@ class HduLogin(object):
         self.session.post(url_login_post, data=form_data)
         r = self.session.get(url_index)
         soup = bs(r.content, "lxml")
-        # print(soup.find("a", {"class":"User_Name"}))
-        # print(soup.find("a", {"onclick":"javascript:qiandao('qiandao')"}))
 
         try:
             if soup.find("a", {"class": "User_Name"}).get_text() == self.username:
@@ -90,7 +99,9 @@ class HduLogin(object):
                 print("多次尝试登录失败, 退出程序")
                 return
 
-    def signin(self):  # 签到函数
+    def signin(self):
+        """签到函数
+        """
         r = self.session.get(url_index)
         soup = bs(r.content, "lxml")
         if not soup.find("a", {"onclick": "javascript:qiandao('qiandao')"}):
@@ -100,7 +111,6 @@ class HduLogin(object):
         self.session.post(url_signin, data=form_data)
         r = self.session.get(url_index)
         soup = bs(r.content, "lxml")
-        # print(soup.find("a", {"onclick":"javascript:qiandao('qiandao')"}))
         if not soup.find("a", {"onclick": "javascript:qiandao('qiandao')"}):
             print("签到成功")
 
