@@ -86,6 +86,7 @@ class MyImg(object):
         return gray_img
 
     def get_str(self):
+        # return input("str: ")
         return pytesseract.image_to_string(self.final_img).strip().replace(' ', '').replace('\n', '').replace('|', '')
 
 

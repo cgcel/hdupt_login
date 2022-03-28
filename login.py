@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 # author: elvin
 
+import re
 import sys
 from datetime import datetime
 
@@ -15,6 +16,7 @@ url_login_get = 'https://pt.hdupt.com/login.php'
 url_login_post = 'https://pt.hdupt.com/takelogin.php'
 url_index = 'https://pt.hdupt.com/index.php'
 url_signin = 'https://pt.hdupt.com/added.php'
+url_img = 'https://pt.hdupt.com/image.php?action=regimage&imagehash={}'
 
 
 class HduLogin(object):
@@ -25,7 +27,7 @@ class HduLogin(object):
             'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
             'accept-language': 'zh,zh-CN;q=0.9,en-US;q=0.8,en;q=0.7',
             'cache-control': 'max-age=0',
-            'referer': 'https://pt.hdupt.com/login.php',
+            'referer': 'https://pt.hdupt.com/index.php',
             'sec-ch-ua': '"Google Chrome";v="89", "Chromium";v="89", ";Not A Brand";v="99"',
             'sec-ch-ua-mobile': '?0',
             'sec-fetch-dest': 'document',
@@ -63,12 +65,12 @@ class HduLogin(object):
         """登录函数
         """
         r = self.session.get(url_login_get)
-        soup = bs(r.content, "lxml")
+        # print(r.text)
 
-        image_hash = soup.find(
-            "input", {"type": "hidden", "name": "imagehash"})['value']
-        image_src = soup.find("img", {"border": "0", "alt": "CAPTCHA"})['src']
-        url_image = url_root + image_src
+        pattern = re.compile(r'imagehash=(.*?)"')
+        image_hash = pattern.findall(r.text)[0]
+
+        url_image = url_img.format(image_hash)
 
         with open("image.png", "wb") as img:
             img.write(requests.get(url_image).content)
@@ -82,13 +84,11 @@ class HduLogin(object):
             'imagestring': captcha_str,
             'imagehash': image_hash
         }
+
         self.session.post(url_login_post, data=form_data)
         r = self.session.get(url_index)
-        soup = bs(r.content, "lxml")
-
         try:
-            if soup.find("a", {"class": "User_Name"}).get_text() == self.username:
-                print("登录成功")
+            if r.status_code == 200:
                 self.flag = True
         except:
             self.retry_time += 1
@@ -103,14 +103,14 @@ class HduLogin(object):
         """签到函数
         """
         r = self.session.get(url_index)
-        soup = bs(r.content, "lxml")
+        soup = bs(r.content, "html.parser")
         if not soup.find("a", {"onclick": "javascript:qiandao('qiandao')"}):
             print("无需重复签到")
             return
         form_data = {"action": "qiandao"}
         self.session.post(url_signin, data=form_data)
         r = self.session.get(url_index)
-        soup = bs(r.content, "lxml")
+        soup = bs(r.content, "html.parser")
         if not soup.find("a", {"onclick": "javascript:qiandao('qiandao')"}):
             print("签到成功")
 
