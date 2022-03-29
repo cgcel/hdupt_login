@@ -30,3 +30,17 @@
     ```
     $ python login.py username password
     ```
+
+## 定时运行 (Ubuntu)
+
+1. 进入 crontab:
+
+   ```
+   crontab -e
+   ```
+
+2. 设置为每天0点5分签到
+
+   ```
+   5 0 * * * /usr/bin/python3 /path/to/script/login.py username password >> /path/to/log/run.log 2>&1
+   ```
