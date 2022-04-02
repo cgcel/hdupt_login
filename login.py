@@ -65,7 +65,6 @@ class HduLogin(object):
         """登录函数
         """
         r = self.session.get(url_login_get)
-        # print(r.text)
 
         pattern = re.compile(r'imagehash=(.*?)"')
         image_hash = pattern.findall(r.text)[0]
@@ -88,16 +87,19 @@ class HduLogin(object):
         self.session.post(url_login_post, data=form_data)
         r = self.session.get(url_index)
         try:
-            if r.status_code == 200:
+            if len(re.findall('欢迎回来', r.text)) == 1:
                 self.flag = True
-        except:
-            self.retry_time += 1
-            if self.retry_time < 6:
-                print("登录失败, 重试{}次...".format(self.retry_time))
-                self.login()
-            else:
-                print("多次尝试登录失败, 退出程序")
                 return
+            else:
+                self.retry_time += 1
+                if self.retry_time < 6:
+                    print("登录失败, 重试{}次...".format(self.retry_time))
+                    self.login()
+                else:
+                    print("多次尝试登录失败, 退出程序")
+                    return
+        except:
+            pass
 
     def signin(self):
         """签到函数
